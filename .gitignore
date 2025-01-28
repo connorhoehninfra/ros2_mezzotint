@@ -2,3 +2,4 @@ project_summary.pdf
 build/
 install/
 log/
+.vscode/
