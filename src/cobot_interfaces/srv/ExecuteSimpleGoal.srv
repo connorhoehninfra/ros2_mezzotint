@@ -1,0 +1,6 @@
+# Request
+float64[] goal_position    # [x, y, z]
+---
+# Response
+string message
+bool success

@@ -1,0 +1,8 @@
+# Request
+int32 command # 0 -> stop rocking at 90 degrees, 1 -> start rocking around 90 degrees in a sinusoidal manner
+float64 rocking_angle # Rocking angle in degrees #Default 60 degrees
+float64 rocking_frequency # Rocking frequency in Hz #Default 10 Hz
+---
+# Response
+string message
+bool success

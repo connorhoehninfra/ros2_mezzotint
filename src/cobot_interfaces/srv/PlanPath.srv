@@ -1,0 +1,10 @@
+# Request
+float64[] start_point    # [x, y, z]
+float64[] end_point      # [x, y, z]
+float64 resolution       # Path resolution
+float64 pitch_distance   # Distance between zigzag lines
+
+---
+# Response
+bool success
+geometry_msgs/Point[] path_points  # List of points in the generated path
