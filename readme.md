@@ -136,3 +136,13 @@ ros2 run rqt_service_caller rqt_service_caller
 <div align="center">
   <small>Built with ROS2 Jazzy Jalisco and MoveIt2</small>
 </div>
+
+
+```
+### Session Start
+cd /home/ubuntu/Projects/ros2_mezzotint
+rm -rf build install log
+colcon build --symlink-install
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+```
