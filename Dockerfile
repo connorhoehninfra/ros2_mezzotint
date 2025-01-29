@@ -49,6 +49,10 @@ RUN if [ "$ON_MAC" = "true" ]; then \
         echo "export DISPLAY=host.docker.internal:0" >> /root/.bashrc; \
     fi
 
+# Add source commands to .bashrc
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
+    echo "source /root/colcon_ws/install/setup.bash" >> /root/.bashrc 
+
 # Set the working directory
 WORKDIR /root/colcon_ws
 
