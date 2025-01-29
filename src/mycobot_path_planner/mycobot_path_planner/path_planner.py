@@ -66,64 +66,54 @@ class PathPlanner(Node):
         Generate a zigzag path from start_point to end_point in the x-y plane.
         """
         try:
-            self.get_logger().info(f"Starting zigzag path generation with params:")
-            start_x, start_y, start_z = start_point[0], start_point[1], start_point[2]
-            end_x, end_y, end_z = end_point[0], end_point[1], end_point[2]
-            resolution = resolution
-            pitch_distance = pitch_distance
+            start_x, start_y, start_z = start_point
+            end_x, end_y, end_z = end_point
             
-            self.get_logger().info(f"Start: [{start_x}, {start_y}, {start_z}], End: [{end_x}, {end_y}, {end_z}]")
-            self.get_logger().info(f"Resolution: {resolution}, Pitch: {pitch_distance}")
-            
-            path = []
-            current_x, current_y, current_z = start_x, start_y, start_z
-            
-            # Direction flag: True for left-to-right, False for right-to-left
-            going_right = True
-            
-            # Add the starting point
-            path.append((round(current_x, 8), round(current_y, 8), round(current_z, 8)))
-            
-            # Safety counter to prevent infinite loops
-            max_iterations = int((abs(start_y - end_y) / pitch_distance + 2) * 
-                            (abs(start_x - end_x) / resolution + 2))
-            iteration_count = 0
-            
-            while current_y > end_y - pitch_distance/2:
-                iteration_count += 1
-                if iteration_count > max_iterations:
-                    self.get_logger().warn("Maximum iterations exceeded in zigzag generation")
-                    break
-                    
-                if going_right:
-                    # Move right
-                    while current_x > end_x:
-                        current_x -= resolution
-                        current_x = max(current_x, end_x)
-                        path.append((round(current_x, 8), round(current_y, 8), round(current_z, 8)))
-                else:
-                    # Move left
-                    while current_x < start_x:
-                        current_x += resolution
-                        current_x = min(current_x, start_x)
-                        path.append((round(current_x, 8), round(current_y, 8), round(current_z, 8)))
+            # Determine boundaries and directions
+            x_min, x_max = sorted([start_x, end_x])
+            y_dir = 1 if end_y > start_y else -1
+            y_step = pitch_distance * y_dir
 
-                # Move down if not at end_y
-                if current_y > end_y:
-                    current_y -= pitch_distance
-                    current_y = max(current_y, end_y)
-                    path.append((round(current_x, 8), round(current_y, 8), round(current_z, 8)))
-                
-                # Toggle direction
-                going_right = not going_right
-                
-                # Check if reached the endpoint
-                if current_x == end_x and current_y == end_y:
+            # Generate y positions with precise endpoint
+            y_positions = []
+            current_y = start_y
+            while (y_dir == 1 and current_y <= end_y) or (y_dir == -1 and current_y >= end_y):
+                y_positions.append(current_y)
+                if current_y == end_y:
                     break
-            
-            # Ensure the last point is exactly the end point
-            if path[-1] != (end_x, end_y, end_z):
-                path.append((end_x, end_y, end_z))
+                next_y = current_y + y_step
+                if (y_dir == 1 and next_y > end_y) or (y_dir == -1 and next_y < end_y):
+                    y_positions.append(end_y)
+                    break
+                current_y = next_y
+
+            # Determine initial direction based on start position
+            initial_right = start_x == x_min
+            current_dir = initial_right
+            path = []
+
+            # Generate path points
+            for y in y_positions:
+                x_start = x_min if current_dir else x_max
+                x_end = x_max if current_dir else x_min
+                step = resolution if current_dir else -resolution
+
+                current_x = x_start
+                while (current_dir and current_x <= x_max) or (not current_dir and current_x >= x_min):
+                    path.append((round(current_x, 8), round(y, 8), round(start_z, 8)))
+                    if current_x == x_end:
+                        break
+                    next_x = current_x + step
+                    if (current_dir and next_x > x_max) or (not current_dir and next_x < x_min):
+                        path.append((round(x_end, 8), round(y, 8), round(start_z, 8)))
+                        break
+                    current_x = next_x
+                
+                current_dir = not current_dir  # Reverse direction for next line
+
+            # Ensure exact endpoint match
+            if path[-1] != end_point:
+                path.append(end_point)
 
             self.get_logger().info(f"Zigzag path generation complete. Generated {len(path)} points")
             return path
@@ -133,39 +123,6 @@ class PathPlanner(Node):
             # Return a simple direct path as fallback
             return [(start_point[0], start_point[1], start_point[2]),
                     (end_point[0], end_point[1], end_point[2])]
-
-    def generate_straight_line_path(self, start_point, end_point, resolution):
-        """Generate a simple straight line path between two points for testing"""
-        try:
-            self.get_logger().info("Generating straight line path")
-            path = []
-            
-            # Calculate total distance
-            dx = end_point[0] - start_point[0]
-            dy = end_point[1] - start_point[1]
-            dz = end_point[2] - start_point[2]
-            
-            # Calculate number of points needed
-            distance = (dx**2 + dy**2 + dz**2)**0.5
-            num_points = max(int(distance/resolution), 2)  # Minimum 2 points
-            
-            self.get_logger().info(f"Distance: {distance}, Number of points: {num_points}")
-            
-            # Generate points along the line
-            for i in range(num_points):
-                t = i / (num_points - 1)
-                x = start_point[0] + t * dx
-                y = start_point[1] + t * dy
-                z = start_point[2] + t * dz
-                path.append((x, y, z))
-            
-            return path
-            
-        except Exception as e:
-            self.get_logger().error(f"Error generating path: {str(e)}")
-            self.get_logger().error(traceback.format_exc())
-            return [(start_point[0], start_point[1], start_point[2]), 
-                   (end_point[0], end_point[1], end_point[2])]
 
     def create_marker(self, marker_type, ns, id, scale, color, frame_id="world", action=Marker.ADD):
         """
