@@ -1,12 +1,13 @@
 # Mycobot 630 Pro Mezzotint ROS2 Project
 
-<div align="center">
-    <img src="images/ROS_2_logo.png" width="250" alt="ROS2 Jazzy Jalisco" style="margin-right: 20px; margin-top: 30px; margin-bottom: 35px"/>
-    <img src="images/moveit-2-logo-dark.png" width="300" alt="MoveIt"/>
+<div align="left">
+    <img src="images/ROS_2_logo.png" width="175" alt="ROS2 Jazzy Jalisco" style="margin-right: 20px; margin-bottom: 50px"/>
+    <img src="images/moveit-2-logo-dark.png" width="225" alt="MoveIt"/>
 </div>
 
-![Path Planning Demo](images/path_planning_demo.png)
-
+<div align="center">
+    <img src="images/path_planning_demo.png" width="600" alt="Path_Planninng_Demo"/>
+</div>
 ## Overview
 This project implements an automated mezzotint printmaking process using the Mycobot 630 Pro robotic arm. The system replicates the traditional hand-rocking motion used in mezzotint printmaking on copper plates, leveraging ROS2's Jazzy Jalisco distribution and MoveIt2 for motion planning and control.
 
