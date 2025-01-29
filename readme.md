@@ -1,8 +1,8 @@
 # Mycobot 630 Pro Mezzotint ROS2 Project
 
-<div align="left">
-    <img src="images/ROS_2_logo.png" width="175" alt="ROS2 Jazzy Jalisco" style="margin-right: 20px; margin-bottom: 50px"/>
-    <img src="images/moveit-2-logo-dark.png" width="225" alt="MoveIt"/>
+<div align="center">
+    <img src="images/ROS_2_logo.png" width="175" alt="ROS2 Jazzy Jalisco" style="margin-right: 25px"/>
+    <img src="images/moveit-2-logo.png" width="225" alt="MoveIt"/>
 </div>
 
 <div align="center">
