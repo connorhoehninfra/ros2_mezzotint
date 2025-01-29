@@ -67,26 +67,61 @@ Path planning implementation package:
 
 For detailed installation instructions for both Linux and MacOS environments, please refer to our [Setup Manual](setup-manual.md).
 
+## Available Services
+
+### Path Planning Service
+The path planning service generates the mezzotint tool path based on given parameters.
+
+**Service Type**: `cobot_interfaces/srv/PlanPath`
+
+**Service Definition**:
+```
+# Request
+float64[] start_point # [x, y, z]
+float64[] end_point # [x, y, z]
+float64 resolution # Path resolution
+float64 pitch_distance # Distance between zigzag lines
+---
+# Response
+bool success
+geometry_msgs/Point[] path_points # List of points in the generated path
+```
+
+**Example Usage**:
+```bash
+# Using command line
+ros2 service call /generate_mezzotint_path cobot_interfaces/srv/PlanPath "{
+  start_point: [0.5, 0.2, 0.0],
+  end_point: [0.3, -0.1, 0.0],
+  resolution: 0.05,
+  pitch_distance: 0.01
+}"
+```
+
+**Parameters**:
+- `start_point`: Starting coordinates [x, y, z] of the mezzotint area
+- `end_point`: Ending coordinates [x, y, z] of the mezzotint area
+- `resolution`: Distance between consecutive points in the path (meters)
+- `pitch_distance`: Distance between parallel zigzag lines (meters)
+
+**Response**:
+- `success`: Boolean indicating if path generation was successful
+- `path_points`: Array of 3D points representing the generated tool path
+  
 ## Usage
 
 ### Starting the System
 ```bash
-# Source the workspace
-source ~/colcon_ws/install/setup.bash
-
-# In a new terminal, launch demo.launch
+# launch move group demo.launch
 ros2 launch cobot630pro_moveit_config demo.launch.py
 ```
 
 ### Launching Path Planner Server
 ```bash
-# Source the workspace
-source ~/colcon_ws/install/setup.bash
-
-# Start the path planning service
+# In a new terminal, Start the path planning service
 ros2 launch mycobot_path_planner path_planner.launch.py
 
-# In a new terminal, launch rqt_service_caller to request /plan_path service with request variables
+# In a new terminal, launch rqt_service_caller to request /plan_path service with request variables from the example
 ros2 run rqt_service_caller rqt_service_caller
 ```
 
