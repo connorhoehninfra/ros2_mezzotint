@@ -90,7 +90,7 @@ geometry_msgs/Point[] path_points # List of points in the generated path
 **Example Usage**:
 ```bash
 # Using command line
-ros2 service call /generate_mezzotint_path cobot_interfaces/srv/PlanPath "{
+ros2 service call /plan_path cobot_interfaces/srv/PlanPath "{
   start_point: [0.5, 0.2, 0.0],
   end_point: [0.3, -0.1, 0.0],
   resolution: 0.05,
