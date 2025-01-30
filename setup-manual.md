@@ -3,14 +3,15 @@
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
 2. [Platform-Specific Setup](#platform-specific-setup)
-3. [Building the Docker Image](#building-the-docker-image)
-4. [Running the Container](#running-the-container)
-5. [Troubleshooting](#troubleshooting)
+3. [Building and Running with Docker Compose](#building-and-running-with-docker-compose)
+4. [Manual Build and Run](#manual-build-and-run)
+5. [Using the Container](#using-the-container)
+6. [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
 ### Common Requirements (All Platforms)
-- Docker Desktop installed and running
+- Docker installed and running
 - Git (for cloning the repository)
 - Terminal access
 - The project source code in the `src` directory
@@ -28,7 +29,7 @@ docker run hello-world
 
 ### Linux Setup
 
-#### 1. NVIDIA Driver Requirements (for systems with NVIDIA GPUs)
+#### NVIDIA Driver Requirements (for systems with NVIDIA GPUs)
 The container requires NVIDIA drivers for GPU support on Linux:
 
 ```bash
@@ -40,7 +41,7 @@ sudo ubuntu-drivers autoinstall
 sudo reboot
 ```
 
-#### 2. NVIDIA Container Toolkit
+#### NVIDIA Container Toolkit
 Required for GPU support in Docker containers:
 
 ```bash
@@ -50,58 +51,57 @@ curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dear
     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
-# Update the packages list from the repository 
+# Update and install
 sudo apt-get update
-# Install NVIDIA Container Toolkit
 sudo apt-get install -y nvidia-container-toolkit
-# Configure the container runtime by using the nvidia-ctk command
 sudo nvidia-ctk runtime configure --runtime=docker
-# Restart docker daemon
 sudo systemctl restart docker
 ```
 
 ### MacOS Setup
+No additional setup is required for MacOS as we're using a VNC-based solution. The container will run a VNC server that can be accessed through your web browser.
 
-#### 1. XQuartz Installation
-XQuartz is required for running GUI applications from Docker containers on MacOS:
+## Building and Running with Docker Compose
+
+### Using Make Commands
+The project includes a Makefile with useful commands for managing the container:
 
 ```bash
-# Install using Homebrew
-brew install --cask xquartz
+# Start the container
+make start-container
+
+# Connect to the container's shell
+make connect-container
+
+# Launch RViz2 in the container
+make launch-rviz2
+
+# Stop the container
+make stop-container
+
+# Rebuild and start the container
+make rebuild-container
 ```
 
-Why XQuartz is needed:
-- MacOS doesn't include a native X11 server
-- XQuartz provides the X11 server needed for GUI applications
-- Enables forwarding of graphical applications from the Docker container to your Mac's display
+### Manual Docker Compose Commands
+If you prefer not to use Make:
 
-#### 2. XQuartz Configuration
-After installation, configure XQuartz:
-
-1. Launch XQuartz:
 ```bash
-open -a XQuartz
+# Start the container
+docker compose up -d
+
+# Stop the container
+docker compose down
+
+# Rebuild and start
+docker compose up --build -d
 ```
 
-2. Configure settings:
-   - Open XQuartz Preferences (⌘,)
-   - Go to the "Security" tab
-   - Enable "Allow connections from network clients"
-   - Check "Authenticate connections"
-   - Restart XQuartz for changes to take effect
+## Manual Build and Run
 
-#### 3. Verify XQuartz Setup
-```bash
-# Check if XQuartz is running
-ps aux | grep XQuartz
+### Building the Docker Image
 
-# Check X11 forwarding
-echo $DISPLAY
-```
-
-## Building the Docker Image
-
-### Linux Build
+#### Linux Build
 ```bash
 # Change directory to scripts
 cd scripts/
@@ -109,12 +109,9 @@ cd scripts/
 ./build_linux.sh
 ```
 
-The Linux build:
-- Uses standard X11 forwarding
-- Includes NVIDIA GPU support
-- Optimized for native Linux graphics performance
+The Linux build uses the OSRF ROS2 desktop-full image and includes NVIDIA GPU support.
 
-### MacOS Build
+#### MacOS Build
 ```bash
 # Change directory to scripts
 cd scripts/
@@ -122,40 +119,44 @@ cd scripts/
 ./build_mac.sh
 ```
 
-The MacOS build:
-- Includes X11 forwarding configuration for XQuartz
-- Adds necessary X11 client libraries
-- Configures display settings for MacOS compatibility
+The MacOS build uses the ROS2 desktop VNC image, which includes a built-in VNC server.
 
-## Running the Container
+## Using the Container
 
-### Linux Run
+### Accessing the GUI
+
+#### Linux Users
+GUI applications will work directly through X11 forwarding:
 ```bash
-# Change directory to scripts
-cd scripts/
-# Run the container
-./run_linux.sh
+# Test RViz
+ros2 run rviz2 rviz2
+
+# Test Gazebo
+ros2 launch gazebo_ros gazebo.launch.py
 ```
 
-The Linux run script:
-- Enables GPU passthrough
-- Sets up X11 display forwarding
-- Configures network settings for ROS2
-- Mounts the source directory
+#### MacOS Users
+1. Start the container using docker compose or the provided scripts
+2. Open your web browser and navigate to:
+   ```
+   http://localhost:6080
+   ```
+3. You'll see the VNC interface in your browser, where you can run GUI applications
 
-### MacOS Run
+### Common Operations
+
 ```bash
-# Change directory to scripts
-cd scripts/
-# Run the container
-./run_mac.sh
-```
+# Connect to the container's shell
+docker exec -it ros2_desktop_vnc /bin/bash
 
-The MacOS run script:
-- Starts XQuartz if not running
-- Configures X11 display forwarding
-- Sets up network settings for ROS2
-- Mounts the source directory
+# Build the workspace
+cd /root/colcon_ws
+source /opt/ros/jazzy/setup.bash
+colcon build --mixin release
+
+# Source the workspace
+source /root/colcon_ws/install/setup.bash
+```
 
 ## Troubleshooting
 
@@ -181,51 +182,43 @@ echo $DISPLAY
 
 ### Common Issues on MacOS
 
-1. XQuartz Connection Issues:
-```bash
-# Verify XQuartz is running
-ps aux | grep XQuartz
+1. VNC Connection Issues:
+- Ensure port 6080 is not being used by another application
+- Check if the container is running:
+  ```bash
+  docker ps | grep ros2_desktop_vnc
+  ```
+- Verify port mapping:
+  ```bash
+  docker compose ps
+  ```
 
-# Reset XQuartz permissions
-xhost + localhost
-```
+2. Performance Issues:
+- The VNC connection uses port 6080 by default
+- Increase the `shm_size` in docker-compose.yml if you experience performance issues
+- Consider adjusting the VNC quality settings in the browser interface
 
-2. Display Problems:
-```bash
-# Check DISPLAY variable
-echo $DISPLAY
-
-# Should show: host.docker.internal:0
-```
-
-3. Slow Graphics Performance:
-- Try adjusting indirect rendering:
-```bash
-export LIBGL_ALWAYS_INDIRECT=1
-```
-
-### Testing GUI Applications
-
-After starting the container, test the GUI setup:
-```bash
-# Simple X11 test
-xeyes
-
-# Test RViz
-ros2 run rviz2 rviz2
-
-# Test Gazebo
-ros2 launch gazebo_ros gazebo.launch.py
-```
-
-If any GUI application fails to start:
-1. Check the DISPLAY environment variable
-2. Verify X11 forwarding is working
-3. Ensure all required ROS2 packages are installed
-4. Check system logs for error messages
+### General Troubleshooting
+If you encounter issues:
+1. Check container logs:
+   ```bash
+   docker compose logs
+   ```
+2. Verify the container is running:
+   ```bash
+   docker ps
+   ```
+3. Ensure all volumes are properly mounted:
+   ```bash
+   docker compose config
+   ```
+4. Try rebuilding the container:
+   ```bash
+   make rebuild-container
+   ```
 
 ## Notes
 - Keep the source directory updated
 - Rebuild the container if Dockerfile changes
-- For MacOS users: XQuartz must be running before starting the container
+- For MacOS users: Access the GUI through the VNC web interface
 - For Linux users: Ensure NVIDIA drivers are up to date if using GPU
