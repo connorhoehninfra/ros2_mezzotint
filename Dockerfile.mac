@@ -1,3 +1,4 @@
+# Use ros2 vnc as base image for mac
 FROM tiryoh/ros2-desktop-vnc:jazzy
 
 # Update and upgrade the system
@@ -17,17 +18,29 @@ ros-jazzy-ros2-controllers \
 ros-jazzy-controller-manager \
 ros-jazzy-joint-state-broadcaster \
 ros-jazzy-position-controllers \
-ros-jazzy-moveit-py \
-ros-jazzy-moveit \
-ros-jazzy-moveit-hybrid-planning \
+ros-jazzy-moveit* \
 ros-jazzy-xacro \
 ros-jazzy-ompl \
 ros-jazzy-joint-state-publisher-gui \
 ros-jazzy-vision-opencv \
 ros-jazzy-image-transport \
 ros-jazzy-cv-bridge \
-ros-jazzy-image-pipeline \
-&& rm -rf /var/lib/apt/lists/*
+ros-jazzy-image-pipeline 
 
-# Source ROS 2 automatically in container
-RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc
+# Create workspace and copy source
+RUN mkdir -p /root/colcon_ws/src
+COPY src /root/colcon_ws/src
+
+# Build workspace
+RUN cd /root/colcon_ws && \
+    /bin/bash -c "source /opt/ros/jazzy/setup.bash && colcon build --mixin release"
+
+# Source ROS2 setup in .bashrc
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
+    echo "source /root/colcon_ws/install/setup.bash" >> /root/.bashrc
+
+# Set working directory
+WORKDIR /root/colcon_ws
+
+# Clean up
+RUN rm -rf /var/lib/apt/lists/*

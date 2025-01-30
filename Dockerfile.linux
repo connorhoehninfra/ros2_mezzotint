@@ -1,0 +1,46 @@
+# Use ros2 jazzy desktop as base image for linux/windows
+FROM osrf/ros:jazzy-desktop-full
+
+# Update and upgrade the system
+RUN apt-get update && apt-get dist-upgrade -y
+
+# Install additional packages
+RUN apt-get update && apt-get install -y \
+build-essential \
+git \
+wget \
+vim \
+python3-pip \
+python3-rosdep \
+python3-colcon-common-extensions \
+ros-jazzy-ros2-control \
+ros-jazzy-ros2-controllers \
+ros-jazzy-controller-manager \
+ros-jazzy-joint-state-broadcaster \
+ros-jazzy-position-controllers \
+ros-jazzy-moveit* \
+ros-jazzy-xacro \
+ros-jazzy-ompl \
+ros-jazzy-joint-state-publisher-gui \
+ros-jazzy-vision-opencv \
+ros-jazzy-image-transport \
+ros-jazzy-cv-bridge \
+ros-jazzy-image-pipeline 
+
+# Create workspace and copy source
+RUN mkdir -p /root/colcon_ws/src
+COPY src /root/colcon_ws/src
+
+# Build workspace
+RUN cd /root/colcon_ws && \
+    /bin/bash -c "source /opt/ros/jazzy/setup.bash && colcon build --mixin release"
+
+# Source ROS2 setup in .bashrc
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
+    echo "source /root/colcon_ws/install/setup.bash" >> /root/.bashrc
+
+# Set working directory
+WORKDIR /root/colcon_ws
+
+# Clean up
+RUN rm -rf /var/lib/apt/lists/*
